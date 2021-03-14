@@ -1,0 +1,16 @@
+[package]
+name = "graphite"
+version = "0.1.0"
+authors = ["Sylvan B <sylvanbowdler18@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "graphite_chain"
+path = "src/lib.rs"
+
+[[bin]]
+name = "graphite"
+path = "src/main.rs"
+
+[dependencies]
+sha2 = "0.9"
