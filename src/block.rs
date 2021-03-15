@@ -25,6 +25,7 @@ pub struct Block {
     pub hash: String,
     pub prev_hash: String,
     pub timestamp: u128,
+    pub nonce: u128,
 }
 
 impl Block {
@@ -38,22 +39,36 @@ impl Block {
             hash: String::new(),
             prev_hash,
             timestamp: unix_epoch_time.as_millis(),
+            nonce: 0,
         };
 
-        block.hash = Block::calculate_hash(&block);
+        block.hash = block.calculate_hash();
 
         block
     }
 
-    pub fn calculate_hash(block: &Block) -> String {
+    fn calculate_hash(&mut self) -> String {
         let mut hasher = Sha256::new();
 
-        let data = format!("{}{}{}", block.prev_hash, block.timestamp, block.data);
+        let data = format!("{}{}{}", self.prev_hash, self.timestamp, self.data);
 
         hasher.update(data);
         let hash = hasher.finalize();
 
         format!("{:X}", hash)
+    }
+
+    pub fn mine_block(&mut self, difficulty: usize) {
+        let target_substring = vec!["0"; difficulty].into_iter().collect::<String>();
+        loop {
+            match !self.hash.contains(target_substring.as_str()) {
+                false => break,
+                true => {
+                    self.nonce += 1;
+                    self.hash = self.calculate_hash();
+                }
+            }
+        }
     }
 }
 
@@ -93,5 +108,22 @@ mod tests {
         let hash = sha2::Sha256::digest(&hash_content);
 
         assert_eq!(format!("{:X}", hash), block.hash);
+    }
+
+    #[test]
+    fn it_generates_a_valid_hash_after_mining() {
+        let mut block = Block::new(
+            BlockData::new(String::from("test")),
+            String::from("prev_hash"),
+        );
+        let diff = 1;
+        block.mine_block(diff);
+
+        let expected_format = format!("{}", vec!["0"; diff].into_iter().collect::<String>());
+        let did_generate_correct_hash = block.hash.contains(&expected_format);
+
+        println!("{}", block.hash);
+
+        assert!(did_generate_correct_hash == true);
     }
 }
