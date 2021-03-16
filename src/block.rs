@@ -21,11 +21,11 @@ impl Display for BlockData {
 
 #[derive(Debug)]
 pub struct Block {
-    pub data: BlockData,
-    pub hash: String,
-    pub prev_hash: String,
-    pub timestamp: u128,
-    pub nonce: u128,
+    data: BlockData,
+    hash: String,
+    prev_hash: String,
+    timestamp: u128,
+    nonce: u128,
 }
 
 impl Block {
@@ -47,10 +47,13 @@ impl Block {
         block
     }
 
-    fn calculate_hash(&mut self) -> String {
+    pub fn calculate_hash(&self) -> String {
         let mut hasher = Sha256::new();
 
-        let data = format!("{}{}{}", self.prev_hash, self.timestamp, self.data);
+        let data = format!(
+            "{}{}{}{}",
+            self.prev_hash, self.timestamp, self.data, self.nonce
+        );
 
         hasher.update(data);
         let hash = hasher.finalize();
@@ -58,10 +61,22 @@ impl Block {
         format!("{:X}", hash)
     }
 
+    pub fn get_prev_hash(&self) -> &String {
+        &self.prev_hash
+    }
+
+    pub fn get_hash(&self) -> &String {
+        &self.hash
+    }
+
+    pub fn get_block_data(&self) -> &BlockData {
+        &self.data
+    }
+
     pub fn mine_block(&mut self, difficulty: usize) {
         let target_substring = vec!["0"; difficulty].into_iter().collect::<String>();
         loop {
-            match !self.hash.contains(target_substring.as_str()) {
+            match &self.hash[0..difficulty] != target_substring.as_str() {
                 false => break,
                 true => {
                     self.nonce += 1;
@@ -103,8 +118,11 @@ mod tests {
             String::from("prev_hash"),
         );
 
-        let hash_content =
-            format!("{}{}{}", block.prev_hash, block.timestamp, block.data).into_bytes();
+        let hash_content = format!(
+            "{}{}{}{}",
+            block.prev_hash, block.timestamp, block.data, block.nonce
+        )
+        .into_bytes();
         let hash = sha2::Sha256::digest(&hash_content);
 
         assert_eq!(format!("{:X}", hash), block.hash);
