@@ -1,3 +1,4 @@
+use crate::transaction::{Transaction, TransactionLog};
 use sha2::{Digest, Sha256};
 use std::fmt::Display;
 use std::time::SystemTime;
@@ -22,6 +23,7 @@ impl Display for BlockData {
 #[derive(Debug)]
 pub struct Block {
     data: BlockData,
+    transactions: Vec<Transaction>,
     hash: String,
     prev_hash: String,
     timestamp: u128,
@@ -36,6 +38,7 @@ impl Block {
 
         let mut block = Block {
             data,
+            transactions: vec![],
             hash: String::new(),
             prev_hash,
             timestamp: unix_epoch_time.as_millis(),
@@ -84,6 +87,18 @@ impl Block {
                 }
             }
         }
+    }
+
+    pub fn add_transaction(&mut self, transaction: Transaction) {
+        self.transactions.push(transaction);
+    }
+
+    fn merkle_tree_hash(&self) -> String {
+        let iter = self.transactions.chunks(2);
+
+        while let Some(chunks) = iter.next();
+
+        String::new();
     }
 }
 
