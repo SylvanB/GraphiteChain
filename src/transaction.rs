@@ -29,7 +29,7 @@ impl Transaction {
             destination_addr,
             input_amount,
             output_amount,
-            timestamp: unix_epoch_time.as_millis(),
+            timestamp: unix_epoch_time.as_micros(),
         };
 
         transaction.hash = transaction.calculate_hash();
@@ -53,5 +53,9 @@ impl Transaction {
         let hash = hasher.finalize();
 
         format!("{:X}", hash)
+    }
+
+    pub fn hash(&self) -> &String {
+        &self.hash
     }
 }

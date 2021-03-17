@@ -1,5 +1,8 @@
-use graphite_chain::block::{Block, BlockData};
 use graphite_chain::chain::Chain;
+use graphite_chain::{
+    block::{Block, BlockData},
+    transaction::Transaction,
+};
 
 fn main() {
     let mut chain = Chain::new();
@@ -32,6 +35,47 @@ fn main() {
     println!("Mined block 3!");
 
     println!("Chain is valid: {}", chain.validate_chain());
+
+    println!("Quick Merkle Tree Hash Generation Check");
+
+    let mut block4 = Block::new(
+        BlockData::new(String::from("FourthBlock")),
+        chain.get_last_block().get_hash().clone(),
+    );
+
+    block4.add_transaction(Transaction::new(
+        "source".to_string(),
+        "destiation".to_string(),
+        0.1,
+        0.0,
+    ));
+
+    block4.add_transaction(Transaction::new(
+        "source".to_string(),
+        "destiation".to_string(),
+        0.1,
+        0.0,
+    ));
+
+    block4.add_transaction(Transaction::new(
+        "source".to_string(),
+        "destiation".to_string(),
+        0.1,
+        0.0,
+    ));
+
+    block4.add_transaction(Transaction::new(
+        "source".to_string(),
+        "destiation".to_string(),
+        0.1,
+        0.0,
+    ));
+
+    println!("Merkle Root hash generated from:\n{:#?}", &block4);
+    println!(
+        "Merkle Tree Root Hash for block: {}",
+        &block4.generate_merkle_tree_hash()
+    );
 
     println!("{:#?}", chain);
 }
