@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use sha2::{Digest, Sha256};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Transaction {
     hash: String,
     source_addr: String,

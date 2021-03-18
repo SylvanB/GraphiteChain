@@ -1,3 +1,4 @@
+use crate::merkle_tree::MerkleTreeNode;
 use crate::transaction::Transaction;
 use sha2::{Digest, Sha256};
 use std::fmt::Display;
@@ -28,6 +29,7 @@ pub struct Block {
     prev_hash: String,
     timestamp: u128,
     nonce: u128,
+    transaction_merkle_tree: Option<MerkleTreeNode>,
 }
 
 impl Block {
@@ -43,6 +45,7 @@ impl Block {
             prev_hash,
             timestamp: unix_epoch_time.as_micros(),
             nonce: 0,
+            transaction_merkle_tree: None,
         };
 
         block.hash = block.calculate_hash();
@@ -93,38 +96,8 @@ impl Block {
         self.transactions.push(transaction);
     }
 
-    pub fn generate_merkle_tree_hash(self) -> String {
-        let mut transaction_hashes = self
-            .transactions
-            .into_iter()
-            .map(|t| t.hash().to_string())
-            .collect();
-        Block::generate_branch_merkle_tree_hashes(&mut transaction_hashes)
-    }
-
-    fn generate_branch_merkle_tree_hashes(nodes: &mut Vec<String>) -> String {
-        if nodes.len() == 1 {
-            return nodes[0].clone();
-        }
-
-        let mut iter = nodes.chunks(2);
-        let mut hashed_pairs: Vec<String> = vec![];
-
-        while let Some(chunks) = iter.next() {
-            // This is kinda gross, having to make a new hasher everytime we hash a value
-
-            let format = match chunks.len() == 2 {
-                true => format!("{}{}", chunks[0], chunks[1]),
-                false => chunks[0].to_string(),
-            };
-
-            println!("Hashing following value: {}", &format);
-            let hashed = Sha256::new().chain(format).finalize();
-
-            hashed_pairs.push(format!("{:X}", hashed));
-        }
-
-        Block::generate_branch_merkle_tree_hashes(&mut hashed_pairs)
+    pub fn generate_tree(&self) -> MerkleTreeNode {
+        MerkleTreeNode::generate_tree(self.transactions.clone()).unwrap()
     }
 }
 

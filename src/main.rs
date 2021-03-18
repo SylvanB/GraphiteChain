@@ -36,7 +36,7 @@ fn main() {
 
     println!("Chain is valid: {}", chain.validate_chain());
 
-    println!("Quick Merkle Tree Hash Generation Check");
+    println!("Quick Merkle Tree Hash Genera831F21ECBD361A042A2EFD08311DB4AAFA26E131B91897BAB9CEAF557488A500tion Check");
 
     let mut block4 = Block::new(
         BlockData::new(String::from("FourthBlock")),
@@ -73,8 +73,8 @@ fn main() {
 
     println!("Merkle Root hash generated from:\n{:#?}", &block4);
     println!(
-        "Merkle Tree Root Hash for block: {}",
-        &block4.generate_merkle_tree_hash()
+        "Merkle Tree Root Hash for block: {:#?}",
+        &block4.generate_tree()
     );
 
     println!("{:#?}", chain);
