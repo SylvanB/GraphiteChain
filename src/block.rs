@@ -10,8 +10,13 @@ pub struct BlockData {
 }
 
 impl BlockData {
-    pub fn new(message: String) -> Self {
-        BlockData { message }
+    pub fn new<T>(message: T) -> Self
+    where
+        T: Into<String>,
+    {
+        BlockData {
+            message: message.into(),
+        }
     }
 }
 
@@ -33,7 +38,10 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new(data: BlockData, prev_hash: String) -> Self {
+    pub fn new<T>(data: BlockData, prev_hash: T) -> Self
+    where
+        T: Into<String>,
+    {
         let unix_epoch_time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
@@ -42,7 +50,7 @@ impl Block {
             data,
             transactions: vec![],
             hash: String::new(),
-            prev_hash,
+            prev_hash: prev_hash.into(),
             timestamp: unix_epoch_time.as_micros(),
             nonce: 0,
             transaction_merkle_tree: None,
@@ -56,9 +64,14 @@ impl Block {
     pub fn calculate_hash(&self) -> String {
         let mut hasher = Sha256::new();
 
+        let transaction_root = match &self.transaction_merkle_tree {
+            None => String::new(),
+            Some(r) => r.hash.clone(),
+        };
+
         let data = format!(
-            "{}{}{}{}",
-            self.prev_hash, self.timestamp, self.data, self.nonce
+            "{}{}{}{}{}",
+            self.prev_hash, self.timestamp, self.data, self.nonce, transaction_root
         );
 
         hasher.update(data);
@@ -80,7 +93,13 @@ impl Block {
     }
 
     pub fn mine_block(&mut self, difficulty: usize) {
+        self.transaction_merkle_tree = self.generate_tree();
+
         let target_substring = vec!["0"; difficulty].into_iter().collect::<String>();
+        if !self.hash.is_empty() && &self.hash[0..difficulty] == target_substring.as_str() {
+            return;
+        }
+
         loop {
             match &self.hash[0..difficulty] != target_substring.as_str() {
                 false => break,
@@ -96,8 +115,8 @@ impl Block {
         self.transactions.push(transaction);
     }
 
-    pub fn generate_tree(&self) -> MerkleTreeNode {
-        MerkleTreeNode::generate_tree(self.transactions.clone()).unwrap()
+    pub fn generate_tree(&self) -> Option<MerkleTreeNode> {
+        MerkleTreeNode::generate_tree(self.transactions.clone())
     }
 }
 
@@ -126,24 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn it_generates_an_sha256_hash() {
-        let block = Block::new(
-            BlockData::new(String::from("test")),
-            String::from("prev_hash"),
-        );
-
-        let hash_content = format!(
-            "{}{}{}{}",
-            block.prev_hash, block.timestamp, block.data, block.nonce
-        )
-        .into_bytes();
-        let hash = sha2::Sha256::digest(&hash_content);
-
-        assert_eq!(format!("{:X}", hash), block.hash);
-    }
-
-    #[test]
-    fn it_generates_a_valid_hash_after_mining() {
+    fn it_generates_a_valid_hash_according_to_difficulty_after_mining() {
         let mut block = Block::new(
             BlockData::new(String::from("test")),
             String::from("prev_hash"),
@@ -152,10 +154,37 @@ mod tests {
         block.mine_block(diff);
 
         let expected_format = format!("{}", vec!["0"; diff].into_iter().collect::<String>());
-        let did_generate_correct_hash = block.hash.contains(&expected_format);
+        let valid_hash = block.hash.contains(&expected_format);
 
         println!("{}", block.hash);
 
-        assert!(did_generate_correct_hash == true);
+        assert!(valid_hash);
+    }
+
+    #[test]
+    fn it_generates_hash_based_on_block_content_after_mining() {
+        let mut block = Block::new(
+            BlockData::new(String::from("test")),
+            String::from("prev_hash"),
+        );
+        let diff = 1;
+        block.mine_block(diff);
+
+        let transaction_root = match &block.transaction_merkle_tree {
+            None => String::new(),
+            Some(r) => r.hash.clone(),
+        };
+
+        let expected_hash_content = format!(
+            "{}{}{}{}{}",
+            block.prev_hash, block.timestamp, block.data, block.nonce, transaction_root
+        );
+
+        let mut hasher = Sha256::new();
+        hasher.update(expected_hash_content);
+
+        let expected_hash = format!("{:X}", hasher.finalize());
+
+        assert!(expected_hash == block.hash);
     }
 }

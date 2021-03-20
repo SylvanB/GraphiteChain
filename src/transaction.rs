@@ -13,20 +13,24 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn new(
-        source_addr: String,
-        destination_addr: String,
+    pub fn new<T1, T2>(
+        source_addr: T1,
+        destination_addr: T2,
         input_amount: f64,
         output_amount: f64,
-    ) -> Self {
+    ) -> Self
+    where
+        T1: Into<String>,
+        T2: Into<String>,
+    {
         let unix_epoch_time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
 
         let mut transaction = Self {
             hash: String::new(),
-            source_addr,
-            destination_addr,
+            source_addr: source_addr.into(),
+            destination_addr: destination_addr.into(),
             input_amount,
             output_amount,
             timestamp: unix_epoch_time.as_micros(),

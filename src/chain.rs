@@ -32,6 +32,7 @@ impl Chain {
     }
 
     pub fn add_block(&mut self, block: Block) {
+        block.generate_tree();
         self.chain.push(block);
     }
 
